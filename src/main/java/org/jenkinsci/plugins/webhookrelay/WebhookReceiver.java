@@ -12,10 +12,12 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
-import org.java_websocket.util.JSONObjectHelper;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -126,6 +128,27 @@ public class WebhookReceiver extends WebSocketClient {
     public boolean shouldBeIncluded(String header) {
         return !header.equalsIgnoreCase("content-length") && !header.equalsIgnoreCase("Host");
 
+    }
+
+    public static class JSONObjectHelper {
+
+        public static final String ENCODING = "UTF-8";
+
+        public static @Nonnull JSONObject getJSONObjectDecodeSafe(@Nonnull String body) {
+            try {
+                return JSONObject.fromObject(body);
+            } catch (JSONException e) {
+                return JSONObject.fromObject(urlDecode(body));
+            }
+        }
+
+        private static @Nonnull String urlDecode(@Nonnull String pathToken) {
+            try {
+                return URLDecoder.decode(pathToken, ENCODING);
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalStateException(String.format("Unexpected URL decode exception. %s not supported on this system.", ENCODING), e);
+            }
+        }
     }
 
 }
